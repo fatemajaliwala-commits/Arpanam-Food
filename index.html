@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Arpanam Food</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, -apple-system, sans-serif; background: #faf9f6; color: #1a1a1a; font-size: 15px; max-width: 480px; margin: 0 auto; }
+
+header { background: #fff; border-bottom: 1px solid #e5e5e5; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+header h1 { font-size: 17px; font-weight: 700; color: #b45309; }
+.user-chip  { font-size: 12px; background: #fef3c7; color: #92400e; padding: 3px 9px; border-radius: 12px; font-weight: 500; }
+.logout-btn { font-size: 12px; color: #888; background: none; border: 1px solid #e0e0e0; padding: 3px 9px; border-radius: 12px; cursor: pointer; }
+
+.page { padding: 16px; display: none; }
+.page.active { display: block; padding-bottom: 110px; }
+
+.card { background: #fff; border: 1px solid #eee; border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+
+label { display: block; font-size: 12px; color: #777; margin-bottom: 4px; margin-top: 14px; font-weight: 500; }
+label:first-of-type { margin-top: 0; }
+input[type=text], input[type=email], input[type=tel], input[type=number], input[type=url], textarea {
+  width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 10px 12px; font-size: 14px; outline: none; background: #fff; color: #1a1a1a; font-family: inherit;
+}
+input:focus, textarea:focus { border-color: #b45309; }
+textarea { resize: vertical; }
+
+.btn { display: block; width: 100%; padding: 13px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; text-align: center; font-family: inherit; }
+.btn-primary   { background: #b45309; color: #fff; }
+.btn-secondary { background: #f3f4f6; color: #444; border: 1px solid #e0e0e0; font-weight: 400; margin-top: 8px; }
+.btn-sm        { padding: 7px 12px; font-size: 13px; width: auto; display: inline-block; border-radius: 8px; cursor: pointer; border: 1px solid #e0e0e0; font-family: inherit; background: #f9f9f9; color: #444; }
+
+.tabs { display: flex; background: #f3f4f6; border-radius: 10px; padding: 3px; margin-bottom: 16px; }
+.tab  { flex: 1; text-align: center; padding: 8px; border-radius: 8px; font-size: 14px; cursor: pointer; color: #666; }
+.tab.active { background: #fff; color: #1a1a1a; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+.sec-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #aaa; margin-bottom: 12px; }
+
+/* date banner */
+.date-banner { background: linear-gradient(135deg,#b45309,#d97706); color:#fff; border-radius:14px; padding:14px 16px; margin-bottom:16px; }
+.date-banner .db-day  { font-size:12px; opacity:.8; }
+.date-banner .db-date { font-size:20px; font-weight:700; }
+.date-banner .db-meal { font-size:12px; opacity:.8; margin-top:2px; }
+
+/* combo card */
+.combo-card { background:#fff; border:2px solid #e8e8e8; border-radius:16px; margin-bottom:14px; overflow:hidden; transition:border-color .15s; }
+.combo-card.selected { border-color:#b45309; }
+.combo-img-wrap { width:100%; height:190px; background:#f5ede0; display:flex; align-items:center; justify-content:center; font-size:52px; overflow:hidden; }
+.combo-img-wrap img { width:100%; height:100%; object-fit:cover; display:block; }
+.combo-body { padding:14px 14px 16px; }
+.combo-opt-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:#b45309; margin-bottom:6px; }
+.combo-title { font-size:17px; font-weight:700; margin-bottom:12px; }
+
+/* dish list inside combo — stacked */
+.combo-dish-list { margin-bottom:14px; }
+.combo-dish-row { display:flex; align-items:center; gap:8px; padding:5px 0; border-bottom:1px solid #f5f5f5; font-size:13px; color:#444; }
+.combo-dish-row:last-child { border-bottom:none; }
+.combo-dish-dot { width:6px; height:6px; border-radius:50%; background:#d97706; flex-shrink:0; }
+
+.combo-footer { display:flex; align-items:center; justify-content:space-between; padding-top:12px; border-top:1px solid #f0f0f0; }
+.combo-price  { font-size:20px; font-weight:800; color:#b45309; }
+
+/* dish card */
+.dish-card { background:#fff; border:2px solid #e8e8e8; border-radius:16px; margin-bottom:14px; overflow:hidden; transition:border-color .15s; }
+.dish-card.has-qty { border-color:#b45309; }
+.dish-img-wrap { width:100%; height:160px; background:#f5ede0; display:flex; align-items:center; justify-content:center; font-size:44px; overflow:hidden; }
+.dish-img-wrap img { width:100%; height:100%; object-fit:cover; display:block; }
+.dish-body   { padding:14px 14px 16px; }
+.dish-name   { font-size:16px; font-weight:700; margin-bottom:5px; }
+.dish-desc   { font-size:13px; color:#666; line-height:1.6; margin-bottom:12px; }
+.dish-footer { display:flex; align-items:center; justify-content:space-between; }
+.dish-price  { font-size:18px; font-weight:800; color:#b45309; }
+
+/* qty control */
+.qty-ctrl { display:flex; align-items:center; gap:8px; }
+.qty-btn  { width:32px; height:32px; border:1.5px solid #ddd; border-radius:8px; background:#fff; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; -webkit-tap-highlight-color:transparent; color:#444; }
+.qty-btn:active { background:#f3f4f6; }
+.qty-num  { min-width:24px; text-align:center; font-size:15px; font-weight:700; }
+
+/* sticky cart bar */
+.cart-bar { position:fixed; bottom:0; left:0; right:0; max-width:480px; margin:0 auto; background:#fff; border-top:1px solid #eee; padding:12px 16px; z-index:99; }
+.cart-bar-inner { display:flex; align-items:center; justify-content:space-between; background:#b45309; border-radius:12px; padding:12px 16px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.cart-bar-left  { font-size:12px; color:rgba(255,255,255,.8); margin-bottom:2px; }
+.cart-bar-label { font-size:15px; font-weight:700; color:#fff; }
+.cart-bar-total { font-size:18px; font-weight:800; color:#fff; }
+
+/* review */
+.rev-row { display:flex; align-items:center; justify-content:space-between; padding:11px 0; border-bottom:1px solid #f3f3f3; }
+.rev-row:last-child { border-bottom:none; }
+.rev-item-name  { font-size:14px; flex:1; }
+.rev-total-row  { display:flex; justify-content:space-between; font-size:17px; font-weight:700; padding-top:12px; margin-top:6px; border-top:2px solid #eee; }
+
+/* confirmation */
+.confirm-icon  { font-size:60px; text-align:center; margin:24px 0 10px; }
+.confirm-title { font-size:22px; font-weight:700; text-align:center; margin-bottom:8px; }
+.confirm-msg   { font-size:14px; color:#555; text-align:center; line-height:1.7; margin-bottom:20px; padding:0 8px; }
+.confirm-time  { background:#fef3c7; border:1px solid #fde68a; border-radius:12px; padding:14px 16px; text-align:center; font-size:14px; color:#92400e; font-weight:600; margin-bottom:20px; line-height:1.6; }
+
+.sum-row { display:flex; justify-content:space-between; padding:7px 0; font-size:14px; border-bottom:1px solid #f5f5f5; }
+.sum-row:last-child { border-bottom:none; }
+
+/* past orders */
+.hist-item { padding:12px 0; border-bottom:1px solid #f0f0f0; }
+.hist-item:last-child { border-bottom:none; }
+.hist-date  { font-size:11px; color:#bbb; margin-bottom:3px; }
+.hist-items { font-size:13px; color:#555; margin-bottom:3px; }
+.hist-total { font-size:13px; font-weight:600; color:#b45309; }
+
+/* profile edit page */
+.profile-header { display:flex; align-items:center; gap:10px; margin-bottom:20px; }
+.profile-header button { background:none; border:none; cursor:pointer; font-size:22px; color:#b45309; line-height:1; padding:0; }
+
+/* admin */
+.adm-item-card { background:#f9f9f9; border:1px solid #eee; border-radius:10px; padding:12px; margin-bottom:10px; }
+
+/* image upload */
+.img-upload-wrap { position:relative; width:100%; height:140px; border-radius:10px; overflow:hidden; background:#f0ebe3; display:flex; align-items:center; justify-content:center; margin-bottom:6px; cursor:pointer; border:2px dashed #ddd; }
+.img-upload-wrap img { width:100%; height:100%; object-fit:cover; display:block; }
+.img-upload-wrap .img-placeholder { text-align:center; color:#bbb; font-size:13px; }
+.img-upload-wrap .img-placeholder span { font-size:28px; display:block; margin-bottom:4px; }
+.img-upload-wrap .img-change-badge { position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.55); color:#fff; font-size:11px; padding:3px 8px; border-radius:6px; }
+input[type=file] { display:none; }
+input[type=file] { display:none; }
+.adm-row { display:flex; gap:6px; margin-bottom:6px; align-items:center; }
+.adm-row input { min-width:0; }
+.rm-btn { background:#fee2e2; border:none; border-radius:7px; padding:9px 11px; cursor:pointer; color:#b91c1c; font-size:13px; white-space:nowrap; flex-shrink:0; }
+
+/* toast */
+.toast { position:fixed; bottom:90px; left:50%; transform:translateX(-50%); background:#1a1a1a; color:#fff; padding:10px 20px; border-radius:10px; font-size:13px; z-index:999; display:none; white-space:nowrap; }
+.toast.show { display:block; animation:fadeup .2s ease; }
+@keyframes fadeup { from{opacity:0;transform:translateX(-50%) translateY(6px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+
+.spinner { display:inline-block; width:15px; height:15px; border:2px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius:50%; animation:spin .6s linear infinite; vertical-align:-3px; margin-right:6px; }
+@keyframes spin { to{transform:rotate(360deg)} }
+
+.hidden { display:none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🍱 Arpanam Food</h1>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <span id="hdr-user" class="user-chip hidden"></span>
+    <button id="hdr-logout" class="logout-btn hidden" onclick="logout()">Sign out</button>
+  </div>
+</header>
+
+<!-- ═══ AUTH ═══════════════════════════════════════════════════════ -->
+<div id="pg-auth" class="page active">
+  <div style="padding-top:20px;">
+    <div class="card">
+      <div class="tabs">
+        <div class="tab active" id="tab-in"  onclick="authTab('in')">Sign in</div>
+        <div class="tab"       id="tab-reg" onclick="authTab('reg')">New here?</div>
+      </div>
+      <div id="form-signin">
+        <p style="font-size:13px;color:#888;margin-bottom:14px;">Enter your email — we'll load your saved details.</p>
+        <label>Email</label>
+        <input type="email" id="si-email" placeholder="you@example.com" inputmode="email">
+        <button class="btn btn-primary" style="margin-top:16px;" onclick="signIn()">Sign in</button>
+      </div>
+      <div id="form-register" class="hidden">
+        <label>Email *</label>
+        <input type="email" id="rg-email" placeholder="you@example.com" inputmode="email">
+        <label>Full Name *</label>
+        <input type="text"  id="rg-name"  placeholder="Your name">
+        <label>Mobile *</label>
+        <input type="tel"   id="rg-mobile" placeholder="10-digit number" inputmode="numeric" maxlength="10">
+        <label>Delivery Address *</label>
+        <textarea id="rg-addr" placeholder="Flat, street, landmark…" style="min-height:80px;"></textarea>
+        <button class="btn btn-primary" style="margin-top:16px;" onclick="register()">Create account & continue</button>
+      </div>
+    </div>
+    <p style="text-align:center;font-size:12px;color:#bbb;margin-top:8px;">
+      Admin? <a href="#" onclick="openAdmin(event)" style="color:#b45309;">Manage menu</a>
+    </p>
+  </div>
+</div>
+
+<!-- ═══ PROFILE EDIT ════════════════════════════════════════════════ -->
+<div id="pg-profile" class="page">
+  <div class="profile-header">
+    <button onclick="closeProfile()">←</button>
+    <div style="font-size:18px;font-weight:700;">Edit Profile</div>
+  </div>
+  <div class="card">
+    <label>Full Name</label>
+    <input type="text"  id="pr-name"   placeholder="Your name">
+    <label>Mobile</label>
+    <input type="tel"   id="pr-mobile" placeholder="10-digit number" inputmode="numeric" maxlength="10">
+    <label>Delivery Address</label>
+    <textarea id="pr-addr" placeholder="Flat, street, landmark…" style="min-height:90px;"></textarea>
+    <p style="font-size:12px;color:#bbb;margin-top:10px;">Email cannot be changed.</p>
+  </div>
+  <button class="btn btn-primary" onclick="saveProfile()">Save changes</button>
+  <button class="btn btn-secondary" onclick="closeProfile()">Cancel</button>
+</div>
+
+<!-- ═══ ORDER ══════════════════════════════════════════════════════ -->
+<div id="pg-order" class="page">
+
+  <!-- user card -->
+  <div class="card" style="display:flex;justify-content:space-between;align-items:flex-start;">
+    <div style="font-size:14px;line-height:1.9;">
+      <div style="font-weight:600;" id="disp-name"></div>
+      <div style="color:#888;font-size:13px;" id="disp-mobile"></div>
+      <div style="color:#888;font-size:13px;" id="disp-addr"></div>
+    </div>
+    <a href="#" onclick="openProfile(event)" style="font-size:12px;color:#b45309;white-space:nowrap;margin-top:2px;">Edit</a>
+  </div>
+
+  <!-- date banner below name -->
+  <div class="date-banner">
+    <div class="db-day"  id="banner-day"></div>
+    <div class="db-date" id="banner-date"></div>
+    <div class="db-meal">Dinner Menu</div>
+  </div>
+
+  <div class="sec-label">Meal combos</div>
+  <div id="combos-list"></div>
+
+  <div class="sec-label" style="margin-top:6px;">Individual dishes</div>
+  <div id="dishes-list"></div>
+
+  <!-- sticky cart bar -->
+  <div class="cart-bar" id="cart-bar" style="display:none;">
+    <div class="cart-bar-inner" onclick="goReview()">
+      <div>
+        <div class="cart-bar-left" id="cbar-count"></div>
+        <div class="cart-bar-label">Review Order →</div>
+      </div>
+      <div class="cart-bar-total" id="cbar-total"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ REVIEW ════════════════════════════════════════════════════ -->
+<div id="pg-review" class="page">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+    <button onclick="showPage('pg-order')" style="background:none;border:none;cursor:pointer;font-size:22px;color:#b45309;line-height:1;padding:0;">←</button>
+    <div style="font-size:18px;font-weight:700;">Review your order</div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div class="sec-label" style="margin:0;">Items</div>
+      <button class="btn-sm" onclick="showPage('pg-order')">Edit order</button>
+    </div>
+    <div id="rev-items"></div>
+    <div class="rev-total-row" id="rev-total"></div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div class="sec-label" style="margin:0;">Delivering to</div>
+      <button class="btn-sm" onclick="openProfileFromReview()">Edit details</button>
+    </div>
+    <div style="font-size:14px;line-height:1.9;">
+      <div style="font-weight:600;" id="rev-name"></div>
+      <div style="color:#888;font-size:13px;" id="rev-mobile"></div>
+      <div style="color:#888;font-size:13px;" id="rev-addr"></div>
+    </div>
+  </div>
+
+  <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#92400e;line-height:1.6;">
+    🕙 Your order will be delivered <strong>tomorrow morning between 9:30 – 11:00 AM</strong>
+  </div>
+
+  <div class="cart-bar">
+    <button class="btn btn-primary" id="confirm-btn" onclick="placeOrder()">Place Order</button>
+  </div>
+</div>
+
+<!-- ═══ CONFIRMATION ══════════════════════════════════════════════ -->
+<div id="pg-confirm" class="page">
+  <div class="confirm-icon">🙏</div>
+  <div class="confirm-title">Thank you!</div>
+  <div class="confirm-msg">
+    Thank you for placing the order.<br>
+    You will receive the order<br>
+    <strong>tomorrow morning between 9:30 – 11:00 AM</strong>.
+  </div>
+
+  <div class="confirm-time">
+    📧 Confirmation sent to<br><span id="conf-email" style="word-break:break-all;"></span>
+  </div>
+
+  <div class="card">
+    <div class="sec-label">Your order</div>
+    <div id="conf-items"></div>
+    <div class="rev-total-row" id="conf-total" style="margin-top:8px;"></div>
+  </div>
+
+  <div class="card">
+    <div class="sec-label">Delivering to</div>
+    <div style="font-size:14px;line-height:1.9;">
+      <div style="font-weight:600;" id="conf-name"></div>
+      <div style="color:#888;font-size:13px;" id="conf-addr"></div>
+    </div>
+  </div>
+
+  <button class="btn btn-primary" style="margin-top:4px;" onclick="goNewOrder()">Order again</button>
+</div>
+
+<!-- ═══ ADMIN ═════════════════════════════════════════════════════ -->
+<div id="pg-admin" class="page">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <div style="font-size:18px;font-weight:700;">Admin</div>
+    <button onclick="closeAdmin()" style="font-size:13px;color:#888;background:none;border:none;cursor:pointer;">← Back</button>
+  </div>
+
+  <!-- admin tabs -->
+  <div class="tabs" style="margin-bottom:20px;">
+    <div class="tab active" id="adm-tab-dash"  onclick="adminTab('dash')">📊 Today's Orders</div>
+    <div class="tab"        id="adm-tab-menu"  onclick="adminTab('menu')">✏️ Edit Menu</div>
+  </div>
+
+  <!-- dashboard panel -->
+  <div id="adm-panel-dash">
+    <div style="display:flex;gap:10px;margin-bottom:14px;">
+      <div class="card" style="flex:1;margin:0;text-align:center;">
+        <div style="font-size:11px;color:#aaa;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Orders Today</div>
+        <div style="font-size:32px;font-weight:800;color:#b45309;" id="dash-count">—</div>
+      </div>
+      <div class="card" style="flex:1;margin:0;text-align:center;">
+        <div style="font-size:11px;color:#aaa;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Revenue ₹</div>
+        <div style="font-size:32px;font-weight:800;color:#b45309;" id="dash-rev">—</div>
+      </div>
+    </div>
+
+    <div class="sec-label">Item breakdown</div>
+    <div class="card" id="dash-items" style="margin-bottom:14px;">
+      <div style="font-size:13px;color:#aaa;text-align:center;padding:12px 0;">Loading…</div>
+    </div>
+
+    <div class="sec-label">Order list</div>
+    <div class="card" id="dash-orders">
+      <div style="font-size:13px;color:#aaa;text-align:center;padding:12px 0;">Loading…</div>
+    </div>
+
+    <button class="btn btn-secondary" onclick="loadDashboard()" style="margin-top:4px;">↻ Refresh</button>
+  </div>
+
+  <!-- menu editor panel -->
+  <div id="adm-panel-menu" style="display:none;">
+    <div class="sec-label">Meal combos</div>
+    <div id="adm-combos"></div>
+    <button class="btn-sm" onclick="addCombo()" style="margin-bottom:20px;">+ Add combo</button>
+    <div style="height:1px;background:#eee;margin-bottom:16px;"></div>
+    <div class="sec-label">Individual dishes</div>
+    <div id="adm-dishes"></div>
+    <button class="btn-sm" onclick="addDish()">+ Add dish</button>
+    <button class="btn btn-primary" style="margin-top:20px;" onclick="saveMenu()">Save menu</button>
+    <button class="btn btn-secondary" onclick="closeAdmin()">Cancel</button>
+  </div>
+
+  <p style="text-align:center;font-size:11px;color:#ccc;margin-top:14px;">Admin PIN: 1234</p>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+// ── CONFIG ─────────────────────────────────────────────────────────────
+const ADMIN_PIN   = '1234';
+const SCRIPT_URL  = 'https://script.google.com/macros/s/AKfycbyRtUaSCNJ7gR2VDapwuld4RzwALhYbm71kaUtA-BXwPiJwKTnN9nf7NeOv0EF7FjGK/exec';
+
+// ── DEFAULT MENU ────────────────────────────────────────────────────────
+const DEFAULT_MENU = {
+  combos: [
+    {
+      id:'c1', label:'Dinner Option 1', title:'Full Satvik Thali',
+      includes:['CC Salad','TP Sundal','Kichadi','Kadi','Podi Rice','Pumpkin Poriyal','Matta Rice Kanji'],
+      price:120, img:''
+    },
+    {
+      id:'c2', label:'Dinner Option 2', title:'Light Dinner',
+      includes:['CC Salad','Kichadi','Kadi','Podi Rice','Matta Rice Kanji'],
+      price:80, img:''
+    }
+  ],
+  dishes: [
+    { id:'d1', name:'CC Salad',
+      desc:'A refreshing cucumber and carrot salad lightly tossed with lemon juice, rock salt and fresh coriander. Crisp and cooling.', price:30, img:'' },
+    { id:'d2', name:'TP Sundal',
+      desc:'Tender chickpeas tempered with mustard seeds, curry leaves and grated coconut. A classic South Indian protein-rich side.', price:35, img:'' },
+    { id:'d3', name:'Kichadi',
+      desc:'Finely diced vegetables in a light yoghurt base, seasoned with green chilli and curry leaves. A gentle, probiotic side.', price:30, img:'' },
+    { id:'d4', name:'Kadi',
+      desc:'A smooth, mildly spiced yoghurt curry tempered with mustard and dried red chilli. Pairs beautifully with rice.', price:35, img:'' },
+    { id:'d5', name:'Podi Rice',
+      desc:'Fluffy rice mixed with aromatic gun powder and a generous drizzle of ghee. Simple, bold and deeply satisfying.', price:40, img:'' },
+    { id:'d6', name:'Pumpkin Poriyal',
+      desc:'Yellow pumpkin stir-fried with coconut, turmeric and curry leaves until just tender. Earthy and subtly sweet.', price:35, img:'' },
+    { id:'d7', name:'Matta Rice Kanji',
+      desc:'A warm, slow-cooked porridge made with red matta rice. Light on the stomach, rich in tradition.', price:40, img:'' },
+  ]
+};
+
+// ── STATE ───────────────────────────────────────────────────────────────
+let user = null;
+let menu = {};
+let cart = { combos:{}, dishes:{} };
+let profileReturnPage = 'pg-order'; // where to go after editing profile
+
+// ── INIT ────────────────────────────────────────────────────────────────
+async function init() {
+  // show a loading state briefly while menu fetches
+  const saved = localStorage.getItem('arpanam_user');
+  if (saved) user = JSON.parse(saved);
+  // load cached menu immediately so UI isn't blank
+  menu = JSON.parse(localStorage.getItem('arpanam_menu') || 'null') || DEFAULT_MENU;
+  if (user) showOrderPage(); else showPage('pg-auth');
+  // then fetch fresh menu from Sheet in background
+  await fetchMenu();
+  // re-render menu cards with fresh data
+  if (user) { renderCombos(); renderDishes(); }
+}
+
+// JSONP helper — works from local file AND hosted, bypasses CORS
+function jsonp(url) {
+  return new Promise((resolve) => {
+    const cb = 'cb_' + Date.now() + '_' + Math.floor(Math.random()*10000);
+    const script = document.createElement('script');
+    const timer = setTimeout(() => { cleanup(); resolve(null); }, 8000);
+    function cleanup() { clearTimeout(timer); delete window[cb]; if (script.parentNode) script.parentNode.removeChild(script); }
+    window[cb] = (data) => { cleanup(); resolve(data); };
+    script.onerror = () => { cleanup(); resolve(null); };
+    script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cb;
+    document.head.appendChild(script);
+  });
+}
+
+// Form-encoded POST — works no-cors reliably (Apps Script reads doPost via e.parameter)
+function postToScript(params) {
+  const body = Object.entries(params).map(([k,v]) => encodeURIComponent(k) + '=' + encodeURIComponent(typeof v === 'object' ? JSON.stringify(v) : v)).join('&');
+  return fetch(SCRIPT_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body });
+}
+
+async function fetchMenu() {
+  const data = await jsonp(SCRIPT_URL + '?action=getMenu');
+  if (data && data.combos && data.dishes) {
+    // Merge Sheet data with locally-stored images
+    const cached = JSON.parse(localStorage.getItem('arpanam_menu') || 'null');
+    const getLocalImg = (id) => {
+      if (!cached) return '';
+      const all = [...(cached.combos||[]), ...(cached.dishes||[])];
+      const found = all.find(x => x.id === id);
+      return (found && found.img && !found.img.startsWith('__local__')) ? found.img : '';
+    };
+    data.combos.forEach(c => { if (!c.img || c.img === '__local__') c.img = getLocalImg(c.id); });
+    data.dishes.forEach(d => { if (!d.img || d.img === '__local__') d.img = getLocalImg(d.id); });
+    menu = data;
+    localStorage.setItem('arpanam_menu', JSON.stringify(menu));
+  }
+}
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ── AUTH ────────────────────────────────────────────────────────────────
+function authTab(t) {
+  document.getElementById('tab-in').classList.toggle('active', t==='in');
+  document.getElementById('tab-reg').classList.toggle('active', t==='reg');
+  document.getElementById('form-signin').classList.toggle('hidden',   t!=='in');
+  document.getElementById('form-register').classList.toggle('hidden', t!=='reg');
+}
+function signIn() {
+  const email = g('si-email').toLowerCase();
+  if (!email) { toast('Enter your email'); return; }
+  const users = JSON.parse(localStorage.getItem('arpanam_users') || '{}');
+  if (!users[email]) { toast('No account found — please register'); authTab('reg'); sg('rg-email', email); return; }
+  user = users[email];
+  localStorage.setItem('arpanam_user', JSON.stringify(user));
+  showOrderPage();
+}
+function register() {
+  const email  = g('rg-email').toLowerCase();
+  const name   = g('rg-name');
+  const mobile = g('rg-mobile');
+  const addr   = g('rg-addr');
+  if (!email||!name||!mobile||!addr) { toast('Please fill all fields'); return; }
+  if (!/^\d{10}$/.test(mobile)) { toast('Mobile: 10 digits, no prefix'); return; }
+  user = { email, name, mobile, addr };
+  const users = JSON.parse(localStorage.getItem('arpanam_users') || '{}');
+  users[email] = user;
+  localStorage.setItem('arpanam_users', JSON.stringify(users));
+  localStorage.setItem('arpanam_user', JSON.stringify(user));
+  showOrderPage();
+}
+function logout() {
+  user = null; cart = { combos:{}, dishes:{} };
+  localStorage.removeItem('arpanam_user');
+  document.getElementById('hdr-user').classList.add('hidden');
+  document.getElementById('hdr-logout').classList.add('hidden');
+  showPage('pg-auth');
+}
+
+// ── PROFILE EDIT ────────────────────────────────────────────────────────
+function openProfile(e) {
+  e && e.preventDefault();
+  profileReturnPage = 'pg-order';
+  sg('pr-name',   user.name);
+  sg('pr-mobile', user.mobile);
+  sg('pr-addr',   user.addr);
+  showPage('pg-profile');
+}
+function openProfileFromReview() {
+  profileReturnPage = 'pg-review';
+  sg('pr-name',   user.name);
+  sg('pr-mobile', user.mobile);
+  sg('pr-addr',   user.addr);
+  showPage('pg-profile');
+}
+function saveProfile() {
+  const name   = g('pr-name');
+  const mobile = g('pr-mobile');
+  const addr   = g('pr-addr');
+  if (!name||!mobile||!addr) { toast('Please fill all fields'); return; }
+  if (!/^\d{10}$/.test(mobile)) { toast('Mobile: 10 digits, no prefix'); return; }
+  user = { ...user, name, mobile, addr };
+  const users = JSON.parse(localStorage.getItem('arpanam_users') || '{}');
+  users[user.email] = user;
+  localStorage.setItem('arpanam_users', JSON.stringify(users));
+  localStorage.setItem('arpanam_user', JSON.stringify(user));
+  toast('Profile updated ✓');
+  closeProfile();
+}
+function closeProfile() {
+  if (profileReturnPage === 'pg-review') {
+    // refresh review delivery details before returning
+    document.getElementById('rev-name').textContent   = user.name;
+    document.getElementById('rev-mobile').textContent = '📱 ' + user.mobile;
+    document.getElementById('rev-addr').textContent   = '📍 ' + user.addr;
+    showPage('pg-review');
+  } else {
+    // refresh order page user card
+    document.getElementById('disp-name').textContent   = user.name;
+    document.getElementById('disp-mobile').textContent = '📱 ' + user.mobile;
+    document.getElementById('disp-addr').textContent   = '📍 ' + user.addr;
+    document.getElementById('hdr-user').textContent    = user.name.split(' ')[0];
+    showPage('pg-order');
+  }
+}
+
+// ── ORDER PAGE ──────────────────────────────────────────────────────────
+function showOrderPage() {
+  document.getElementById('hdr-user').textContent = user.name.split(' ')[0];
+  document.getElementById('hdr-user').classList.remove('hidden');
+  document.getElementById('hdr-logout').classList.remove('hidden');
+
+  document.getElementById('disp-name').textContent   = user.name;
+  document.getElementById('disp-mobile').textContent = '📱 ' + user.mobile;
+  document.getElementById('disp-addr').textContent   = '📍 ' + user.addr;
+
+  const now    = new Date();
+  const days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('banner-day').textContent  = days[now.getDay()];
+  document.getElementById('banner-date').textContent = `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+
+  renderCombos();
+  renderDishes();
+  updateCartBar();
+  showPage('pg-order');
+}
+
+// ── COMBOS ──────────────────────────────────────────────────────────────
+function renderCombos() {
+  document.getElementById('combos-list').innerHTML = menu.combos.map(c => {
+    const qty = cart.combos[c.id] || 0;
+    const imgHtml = c.img
+      ? `<img src="${c.img}" alt="${c.title}" onerror="this.parentElement.innerHTML='🍽️'">`
+      : '🍽️';
+    const dishRows = c.includes.map(d =>
+      `<div class="combo-dish-row"><span class="combo-dish-dot"></span>${d}</div>`
+    ).join('');
+    return `
+    <div class="combo-card ${qty>0?'selected':''}" id="cc-${c.id}">
+      <div class="combo-img-wrap">${imgHtml}</div>
+      <div class="combo-body">
+        <div class="combo-opt-label">${c.label}</div>
+        <div class="combo-title">${c.title}</div>
+        <div class="combo-dish-list">${dishRows}</div>
+        <div class="combo-footer">
+          <div class="combo-price">₹${c.price}</div>
+          <div class="qty-ctrl">
+            <button class="qty-btn" onclick="updateCombo('${c.id}',-1)">−</button>
+            <span class="qty-num" id="cq-${c.id}">${qty}</span>
+            <button class="qty-btn" onclick="updateCombo('${c.id}',+1)">+</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateCombo(id, d) {
+  cart.combos[id] = Math.max(0, (cart.combos[id]||0) + d);
+  const el = document.getElementById('cq-'+id);
+  if (el) el.textContent = cart.combos[id];
+  document.getElementById('cc-'+id).classList.toggle('selected', cart.combos[id]>0);
+  updateCartBar();
+}
+
+// ── DISHES ──────────────────────────────────────────────────────────────
+function renderDishes() {
+  document.getElementById('dishes-list').innerHTML = menu.dishes.map(d => {
+    const qty = cart.dishes[d.id] || 0;
+    const imgHtml = d.img
+      ? `<img src="${d.img}" alt="${d.name}" onerror="this.parentElement.innerHTML='🥘'">`
+      : '🥘';
+    return `
+    <div class="dish-card ${qty>0?'has-qty':''}" id="dc-${d.id}">
+      <div class="dish-img-wrap">${imgHtml}</div>
+      <div class="dish-body">
+        <div class="dish-name">${d.name}</div>
+        <div class="dish-desc">${d.desc}</div>
+        <div class="dish-footer">
+          <div class="dish-price">₹${d.price}</div>
+          <div class="qty-ctrl">
+            <button class="qty-btn" onclick="updateDish('${d.id}',-1)">−</button>
+            <span class="qty-num" id="dq-${d.id}">${qty}</span>
+            <button class="qty-btn" onclick="updateDish('${d.id}',+1)">+</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateDish(id, d) {
+  cart.dishes[id] = Math.max(0, (cart.dishes[id]||0) + d);
+  const el = document.getElementById('dq-'+id);
+  if (el) el.textContent = cart.dishes[id];
+  document.getElementById('dc-'+id).classList.toggle('has-qty', cart.dishes[id]>0);
+  updateCartBar();
+}
+
+// ── CART BAR ────────────────────────────────────────────────────────────
+function updateCartBar() {
+  const { total, count } = cartTotals();
+  const bar = document.getElementById('cart-bar');
+  if (count===0) { bar.style.display='none'; return; }
+  bar.style.display='block';
+  document.getElementById('cbar-count').textContent = count + ' item' + (count>1?'s':'') + ' selected';
+  document.getElementById('cbar-total').textContent = '₹' + total;
+}
+
+function cartTotals() {
+  let total=0, count=0;
+  menu.combos.forEach(c => { const q=cart.combos[c.id]||0; total+=q*c.price; count+=q; });
+  menu.dishes.forEach(d => { const q=cart.dishes[d.id]||0; total+=q*d.price; count+=q; });
+  return { total, count };
+}
+
+// ── REVIEW PAGE ─────────────────────────────────────────────────────────
+function goReview() {
+  const { total, count } = cartTotals();
+  if (count===0) { toast('Select at least one item'); return; }
+
+  let html = '';
+  menu.combos.forEach(c => {
+    const q=cart.combos[c.id]||0; if(!q) return;
+    html += `<div class="rev-row">
+      <span class="rev-item-name">${c.label}: ${c.title}</span>
+      <span style="font-size:14px;color:#555;white-space:nowrap;">×${q} &nbsp;₹${c.price*q}</span>
+    </div>`;
+  });
+  menu.dishes.forEach(d => {
+    const q=cart.dishes[d.id]||0; if(!q) return;
+    html += `<div class="rev-row">
+      <span class="rev-item-name">${d.name}</span>
+      <span style="font-size:14px;color:#555;white-space:nowrap;">×${q} &nbsp;₹${d.price*q}</span>
+    </div>`;
+  });
+  document.getElementById('rev-items').innerHTML = html;
+  document.getElementById('rev-total').innerHTML = `<span>Total</span><span>₹${total}</span>`;
+  document.getElementById('rev-name').textContent   = user.name;
+  document.getElementById('rev-mobile').textContent = '📱 ' + user.mobile;
+  document.getElementById('rev-addr').textContent   = '📍 ' + user.addr;
+
+  showPage('pg-review');
+}
+
+// ── PLACE ORDER ──────────────────────────────────────────────────────────
+async function placeOrder() {
+  const { total, count } = cartTotals();
+  if (count===0) { toast('Cart is empty'); return; }
+
+  const btn = document.getElementById('confirm-btn');
+  btn.innerHTML = '<span class="spinner"></span>Placing…';
+  btn.disabled = true;
+
+  const now   = new Date().toLocaleString('en-IN', { timeZone:'Asia/Kolkata' });
+  const lines = [];
+  menu.combos.forEach(c => { const q=cart.combos[c.id]||0; if(q) lines.push(`${c.label} – ${c.title} ×${q}`); });
+  menu.dishes.forEach(d => { const q=cart.dishes[d.id]||0; if(q) lines.push(`${d.name} ×${q}`); });
+
+  // write to Google Sheet
+  try {
+    await postToScript({
+      action: 'saveOrder',
+      name: user.name, email: user.email,
+      mobile: user.mobile, address: user.addr,
+      items: lines.join(' | '), total
+    });
+  } catch(e) {}
+
+  // save local history
+  const key  = 'arpanam_hist_' + user.email;
+  const hist = JSON.parse(localStorage.getItem(key) || '[]');
+  hist.unshift({ date:now, lines, total });
+  localStorage.setItem(key, JSON.stringify(hist.slice(0,20)));
+
+  btn.innerHTML = 'Place Order';
+  btn.disabled  = false;
+  showConfirmPage(total);
+}
+
+// ── CONFIRM PAGE ─────────────────────────────────────────────────────────
+function showConfirmPage(total) {
+  document.getElementById('conf-email').textContent = user.email;
+  document.getElementById('conf-name').textContent  = user.name;
+  document.getElementById('conf-addr').textContent  = user.addr;
+
+  let html = '';
+  menu.combos.forEach(c => {
+    const q=cart.combos[c.id]||0; if(!q) return;
+    html += `<div class="sum-row"><span>${c.label}: ${c.title} ×${q}</span><span>₹${c.price*q}</span></div>`;
+  });
+  menu.dishes.forEach(d => {
+    const q=cart.dishes[d.id]||0; if(!q) return;
+    html += `<div class="sum-row"><span>${d.name} ×${q}</span><span>₹${d.price*q}</span></div>`;
+  });
+  document.getElementById('conf-items').innerHTML = html;
+  document.getElementById('conf-total').innerHTML = `<span>Total</span><span>₹${total}</span>`;
+
+  cart = { combos:{}, dishes:{} };
+  showPage('pg-confirm');
+}
+
+function goNewOrder() { showOrderPage(); }
+
+// ── ADMIN ────────────────────────────────────────────────────────────────
+function openAdmin(e) {
+  e.preventDefault();
+  const pin = prompt('Admin PIN:');
+  if (pin !== ADMIN_PIN) { toast('Wrong PIN'); return; }
+  adminTab('dash');
+  showPage('pg-admin');
+  loadDashboard();
+}
+
+function adminTab(t) {
+  document.getElementById('adm-tab-dash').classList.toggle('active', t==='dash');
+  document.getElementById('adm-tab-menu').classList.toggle('active', t==='menu');
+  document.getElementById('adm-panel-dash').style.display = t==='dash' ? 'block' : 'none';
+  document.getElementById('adm-panel-menu').style.display = t==='menu' ? 'block' : 'none';
+  if (t==='menu') renderAdmin();
+}
+
+async function loadDashboard() {
+  document.getElementById('dash-count').textContent = '…';
+  document.getElementById('dash-rev').textContent   = '…';
+  document.getElementById('dash-items').innerHTML   = '<div style="font-size:13px;color:#aaa;text-align:center;padding:12px 0;">Loading…</div>';
+  document.getElementById('dash-orders').innerHTML  = '<div style="font-size:13px;color:#aaa;text-align:center;padding:12px 0;">Loading…</div>';
+
+  const data = await jsonp(SCRIPT_URL + '?action=getDashboard');
+  if (!data) {
+    document.getElementById('dash-items').innerHTML  = '<div style="font-size:13px;color:#e44;text-align:center;padding:12px 0;">Could not connect to sheet. Check your internet.</div>';
+    document.getElementById('dash-orders').innerHTML = '';
+    document.getElementById('dash-count').textContent = '—';
+    document.getElementById('dash-rev').textContent   = '—';
+    return;
+  }
+
+  document.getElementById('dash-count').textContent = data.totalOrders ?? 0;
+  document.getElementById('dash-rev').textContent   = data.totalRevenue ?? 0;
+
+  if (data.itemBreakdown && data.itemBreakdown.length) {
+    document.getElementById('dash-items').innerHTML = data.itemBreakdown.map(r => `
+      <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f5f5f5;font-size:13px;">
+        <span style="flex:1;color:#444;">${r.item}</span>
+        <span style="font-weight:700;color:#b45309;margin-left:12px;">${r.count}x</span>
+      </div>`).join('');
+  } else {
+    document.getElementById('dash-items').innerHTML = '<div style="font-size:13px;color:#aaa;text-align:center;padding:12px 0;">No orders yet today</div>';
+  }
+
+  if (data.orderList && data.orderList.length) {
+    document.getElementById('dash-orders').innerHTML = data.orderList.map(o => `
+      <div style="padding:10px 0;border-bottom:1px solid #f5f5f5;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+          <span style="font-size:14px;font-weight:600;">${o.name}</span>
+          <span style="font-size:12px;color:#aaa;">${o.time}</span>
+        </div>
+        <div style="font-size:12px;color:#666;margin-bottom:3px;">${o.items}</div>
+        <div style="font-size:13px;font-weight:700;color:#b45309;">₹${o.total}</div>
+      </div>`).join('');
+  } else {
+    document.getElementById('dash-orders').innerHTML = '<div style="font-size:13px;color:#aaa;text-align:center;padding:12px 0;">No orders yet today</div>';
+  }
+}
+function imgPreviewHtml(id, src) {
+  if (src) {
+    return `<div class="img-upload-wrap" onclick="document.getElementById('${id}').click()">
+      <img src="${src}" onerror="this.parentElement.innerHTML='<div class=\'img-placeholder\'><span>📷</span>Tap to upload</div>'">
+      <div class="img-change-badge">✎ Change</div>
+    </div>`;
+  }
+  return `<div class="img-upload-wrap" onclick="document.getElementById('${id}').click()">
+    <div class="img-placeholder"><span>📷</span>Tap to add photo</div>
+  </div>`;
+}
+
+function handleImgUpload(fileInput, previewWrapId) {
+  const file = fileInput.files[0];
+  if (!file) return;
+  // warn if over 1MB — base64 gets large
+  if (file.size > 1.2 * 1024 * 1024) {
+    toast('Image is large — may slow save. Try under 1MB.');
+  }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const b64 = e.target.result;
+    // store on the input element itself as data attr
+    fileInput.dataset.b64 = b64;
+    // update preview
+    const wrap = document.getElementById(previewWrapId);
+    wrap.innerHTML = `<img src="${b64}"><div class="img-change-badge">✎ Change</div>`;
+    wrap.onclick = () => fileInput.click();
+  };
+  reader.readAsDataURL(file);
+}
+
+function getImgValue(fileInputId, fallback) {
+  const el = document.getElementById(fileInputId);
+  return (el && el.dataset.b64) ? el.dataset.b64 : (fallback || '');
+}
+
+function renderAdmin() {
+  document.getElementById('adm-combos').innerHTML = menu.combos.map((c,i) => `
+    <div class="adm-item-card">
+      <div class="adm-row">
+        <input type="text" placeholder="Label e.g. Dinner Option 1" value="${c.label}" id="acl-${i}">
+        <button class="rm-btn" onclick="rmCombo(${i})">Remove</button>
+      </div>
+      <div class="adm-row" style="margin-top:6px;">
+        <input type="text" placeholder="Title e.g. Full Satvik Thali" value="${c.title}" id="act-${i}" style="flex:2;">
+        <input type="number" placeholder="₹" value="${c.price}" id="acp-${i}" style="width:75px;">
+      </div>
+      <label style="margin-top:10px;">Dishes included (one per line)</label>
+      <textarea id="aci-${i}" style="min-height:110px;">${c.includes.join('
+')}</textarea>
+      <label style="margin-top:10px;">Photo</label>
+      <div id="acimg-wrap-${i}">${imgPreviewHtml('acimg-file-'+i, c.img||'')}</div>
+      <input type="file" accept="image/*" id="acimg-file-${i}" onchange="handleImgUpload(this,'acimg-wrap-${i}')">
+      <input type="hidden" id="acimg-${i}" value="${c.img||''}">
+    </div>`).join('');
+
+  document.getElementById('adm-dishes').innerHTML = menu.dishes.map((d,i) => `
+    <div class="adm-item-card">
+      <div class="adm-row">
+        <input type="text" placeholder="Dish name" value="${d.name}" id="adn-${i}" style="flex:2;">
+        <input type="number" placeholder="₹" value="${d.price}" id="adp-${i}" style="width:75px;">
+        <button class="rm-btn" onclick="rmDish(${i})">✕</button>
+      </div>
+      <label style="margin-top:8px;">Description</label>
+      <textarea placeholder="Describe the dish…" id="add-${i}" style="min-height:80px;">${d.desc}</textarea>
+      <label style="margin-top:10px;">Photo</label>
+      <div id="adimg-wrap-${i}">${imgPreviewHtml('adimg-file-'+i, d.img||'')}</div>
+      <input type="file" accept="image/*" id="adimg-file-${i}" onchange="handleImgUpload(this,'adimg-wrap-${i}')">
+      <input type="hidden" id="adimg-${i}" value="${d.img||''}">
+    </div>`).join('');
+}
+function rmCombo(i) { menu.combos.splice(i,1); renderAdmin(); }
+function rmDish(i)  { menu.dishes.splice(i,1); renderAdmin(); }
+function addCombo() {
+  menu.combos.push({ id:'c'+Date.now(), label:'Dinner Option '+(menu.combos.length+1), title:'', includes:[], price:0, img:'' });
+  renderAdmin();
+  document.getElementById('adm-combos').lastElementChild.scrollIntoView({behavior:'smooth'});
+}
+function addDish() {
+  menu.dishes.push({ id:'d'+Date.now(), name:'', desc:'', price:0, img:'' });
+  renderAdmin();
+  document.getElementById('adm-dishes').lastElementChild.scrollIntoView({behavior:'smooth'});
+}
+async function saveMenu() {
+  menu.combos = menu.combos.map((c,i) => ({
+    id:c.id,
+    label:    document.getElementById('acl-'+i).value.trim(),
+    title:    document.getElementById('act-'+i).value.trim(),
+    includes: document.getElementById('aci-'+i).value.split('\n').map(s=>s.trim()).filter(Boolean),
+    price:    parseInt(document.getElementById('acp-'+i).value)||0,
+    img:      getImgValue('acimg-file-'+i, document.getElementById('acimg-'+i).value),
+  }));
+  menu.dishes = menu.dishes.map((d,i) => ({
+    id:d.id,
+    name:  document.getElementById('adn-'+i).value.trim(),
+    desc:  document.getElementById('add-'+i).value.trim(),
+    price: parseInt(document.getElementById('adp-'+i).value)||0,
+    img:   getImgValue('adimg-file-'+i, document.getElementById('adimg-'+i).value),
+  }));
+
+  // Always save full menu (with base64 images) to localStorage — this is the source of truth for images
+  localStorage.setItem('arpanam_menu', JSON.stringify(menu));
+
+  // Send a stripped version (no base64) to the Sheet — Sheet stores text/price/desc only
+  // Images live in localStorage on each device; admin device is the source
+  const menuForSheet = {
+    combos: menu.combos.map(c => ({ ...c, img: c.img && c.img.startsWith('data:') ? '__local__' : c.img })),
+    dishes: menu.dishes.map(d => ({ ...d, img: d.img && d.img.startsWith('data:') ? '__local__' : d.img })),
+  };
+
+  toast('Saving…');
+  try {
+    await postToScript({ action: 'saveMenu', menu: JSON.stringify(menuForSheet) });
+    toast('Menu saved ✓');
+  } catch(e) {
+    toast('Saved locally ✓ (sheet sync failed — check connection)');
+  }
+  closeAdmin();
+}
+function closeAdmin() {
+  if (user) showOrderPage(); else showPage('pg-auth');
+}
+
+// ── UTILS ────────────────────────────────────────────────────────────────
+function g(id)      { return document.getElementById(id).value.trim(); }
+function sg(id,val) { document.getElementById(id).value = val; }
+
+let _tt;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(_tt); _tt = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+init();
+</script>
+</body>
+</html>
